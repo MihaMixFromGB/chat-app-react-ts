@@ -1,57 +1,64 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import {
+  /*
+    Static sites don't support routers that use the HTML5 pushState history API under the hood 
+    (for example, React Router using browserHistory).
+    You can switch to hashHistory for this effect.
+  */
+  BrowserRouter as Router,
+  // HashRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from "react-router-dom";
+
+import { useAppSelector } from "./app/hooks";
+
+import { Layout } from "./app/Layout";
+import { PublicRoute, PrivateRoute } from "./app/route";
+import { ChatsPage } from "./features/chats/";
+import {
+  selectAuthStatus,
+  RegisterPage,
+  UserPage
+} from "./features/users";
 
 function App() {
+  const isAuth = useAppSelector((state) => selectAuthStatus(state));
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout isAuth={isAuth} />}>
+          <Route path="chats" element={
+            <PrivateRoute isAuth={isAuth} to="/signin">
+              <ChatsPage />
+            </PrivateRoute>
+          } >
+            <Route path=":chatId" element={
+              <PrivateRoute isAuth={isAuth} to="/signin">
+                <ChatsPage />
+              </PrivateRoute>
+            } />
+          </Route>
+          <Route path="users/:userId" element={
+            <PrivateRoute isAuth={isAuth} to="/signin">
+              <UserPage />
+            </PrivateRoute>
+          } />
+          <Route path="signin" element={
+            <PublicRoute isAuth={isAuth} to="/chats">
+              <RegisterPage isSignUp={false} />
+            </PublicRoute>
+          } />
+          <Route path="signup" element={
+            <PublicRoute isAuth={isAuth} to="/chats">
+              <RegisterPage isSignUp={true} />
+            </PublicRoute>
+          } />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
